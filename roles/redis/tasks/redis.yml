@@ -1,0 +1,11 @@
+---
+- name: Install Redis
+  dnf:
+    state: present
+    name: redis
+
+- name: Enable and start Redis systemd service
+  systemd:
+    state: started
+    enabled: yes
+    name: redis

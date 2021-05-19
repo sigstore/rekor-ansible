@@ -1,0 +1,5 @@
+---
+# tasks file for trillian
+- include_tasks: prerequisites.yml
+- include_tasks: trillian.yml
+- include_tasks: prepare-database.yml

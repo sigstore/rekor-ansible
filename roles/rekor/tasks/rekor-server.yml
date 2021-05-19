@@ -1,0 +1,41 @@
+- name: Check for rekor-server source code presence
+  stat:
+    path: "$HOME/go/src/github.com/sigstore/rekor/cmd/rekor-server"
+  register: has_rekor_server_code
+
+- name: Donwload rekor-server source code
+  # Since Go 1.6, 'go get' will download code to 'pkg/mod/software@version'.
+  # We'll use Git to download to a predictable location.
+  #command: "go get -u -t github.com/sigstore/rekor/cmd/server"
+  #ignore_errors: yes
+  git:
+    repo: https://github.com/sigstore/rekor
+    dest: "$HOME/go/src/github.com/sigstore/rekor"
+  when: not has_rekor_server_code.stat.exists
+
+- name: Check if we have already built rekor-server
+  stat:
+    path: "$HOME/go/bin/rekor-server"
+  register: has_rekor_server
+
+- name: Build rekor server
+  command: "go install"
+  args:
+    chdir: "$HOME/go/src/github.com/sigstore/rekor/cmd/rekor-server/"
+  when: not has_rekor_server.stat.exists
+
+- name: Check if we have already installed rekor-server
+  stat:
+    path: "/usr/local/bin/rekor-server"
+  register: has_rekor_server_installed
+
+- name: Install rekor-server
+  copy:
+    src: "~/go/bin/rekor-server"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+    mode: u=rwx,g=rx,o=x
+  when: not has_rekor_server_installed.stat.exists
+
+#- name: Start rekor server
+#  command: "rekor-server serve"

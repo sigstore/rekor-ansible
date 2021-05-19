@@ -1,0 +1,24 @@
+---
+- hosts: all, localhost
+  become: true
+  tasks:
+    - name: Set eth0 MTU to 1420, to avoid api.bitbucket.org TLS timeout
+      command: "ip link set dev eth0 mtu 1420"
+
+       # Rekor relies on Trillian log server, which in turn relies or a MySQL
+       # database. If you have any of these already running, feel free to
+       # disable the role. Redis is optional but recommended if you want to be
+       # able to make fast queries on rekor-server. Furthermore, you'll have to
+       # start rekor-server with the `--enable_retrieve_api=false` option.
+
+    - include_role:
+        name: mariadb
+
+    - include_role:
+       name: redis
+
+    - include_role:
+        name: trillian-log-server
+
+    - include_role:
+        name: rekor

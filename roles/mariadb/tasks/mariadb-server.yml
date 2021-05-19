@@ -1,0 +1,11 @@
+---
+- name: Install mariadb-server
+  dnf:
+    state: present
+    name: mariadb-server
+
+- name: Enable and start MariaDB systemd service
+  systemd:
+    state: started
+    enabled: yes
+    name: mariadb

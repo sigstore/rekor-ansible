@@ -1,0 +1,39 @@
+--- 
+- name: Check for rekor-cli source code presence
+  stat:
+    path: "$HOME/go/src/github.com/sigstore/rekor/cmd/rekor-cli"
+  register: has_rekor_cli_code
+
+- name: Donwload rekor-cli source code
+  # Since Go 1.6, 'go get' will download code to 'pkg/mod/software@version'.
+  # We'll use Git to download to a predictable location.
+  #command: "go get -u -t github.com/sigstore/rekor/cmd/cli"
+  #ignore_errors: yes
+  git:
+    repo: https://github.com/sigstore/rekor
+    dest: "$HOME/go/src/github.com/sigstore/rekor"
+  when: not has_rekor_cli_code.stat.exists
+
+- name: Check if we have already built rekor-cli
+  stat:
+    path: "$HOME/go/bin/rekor-cli"
+  register: has_rekor_cli
+
+- name: Build rekor cli
+  command: "go install"
+  args:
+    chdir: "$HOME/go/src/github.com/sigstore/rekor/cmd/rekor-cli/"
+  when: not has_rekor_cli.stat.exists
+
+- name:  Check if we have already installed rekor-cli
+  stat:
+    path: "/usr/local/bin/rekor"
+  register: has_rekor_cli_installed
+
+- name: Install rekor-cli
+  copy:
+    src: "~/go/bin/rekor-cli"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+    mode: u=rwx,g=rx,o=x
+  when: not has_rekor_cli_installed.stat.exists

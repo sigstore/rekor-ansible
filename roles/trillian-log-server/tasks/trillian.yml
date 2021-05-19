@@ -1,0 +1,69 @@
+---
+- name: Check for Trillian source code presence
+  stat:
+    path: "$HOME/go/src/github.com/google/trillian"
+  register: has_trillian_code
+
+- name: Download Trillian transparency log source code
+  # Since Go 1.6, 'go get' will download code to 'pkg/mod/software@version'.
+  # We'll use Git to download to a predictable location.
+  #command: "go get -t -u github.com/google/trillian"
+  git:
+    repo: https://github.com/google/trillian
+    dest: "$HOME/go/src/github.com/google/trillian"
+  when: not has_trillian_code.stat.exists
+
+- name: Check if we have already built Trillian server
+  stat:
+    path: "$HOME/go/bin/trillian_log_server"
+  register: has_tlog_server
+
+- name: Build Trillian server
+  command: "go install ./trillian_log_server"
+  args:
+    chdir: "$HOME/go/src/github.com/google/trillian/cmd/"
+  when: not has_tlog_server.stat.exists
+
+- name: Check if we have already installed Trillian server
+  stat:
+    path: "/usr/bin/local/trillian_log_server"
+  register: has_tlog_server_installed
+
+- name: Install Trillian server
+  copy:
+    # copy works with ~ but not $HOME, not sure why
+    src: "~/go/bin/trillian_log_server"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+    mode: u=rwx,g=rx,o=x
+  when: not has_tlog_server_installed.stat.exists
+
+- name: Check if we have already built Trillian signer
+  stat:
+    path: "$HOME/go/bin/trillian_log_signer"
+  register: has_tlog_signer
+
+- name: Build Trillian signer
+  command: "go install ./trillian_log_signer"
+  args:
+    chdir: "$HOME/go/src/github.com/google/trillian/cmd/"
+  when: not has_tlog_signer.stat.exists
+
+- name: Check if we have already installed Trillian signer
+  stat:
+    path: "/usr/bin/local/trillian_log_signer"
+  register: has_tlog_signer_installed
+
+- name: Install Trillian signer
+  copy:
+    src: "~/go/bin/trillian_log_signer"
+    dest: "/usr/local/bin/"
+    remote_src: yes
+    mode: u=rwx,g=rx,o=x
+  when: not has_tlog_signer_installed.stat.exists
+
+#- name: Start Trillian log server on ports 8090 (HTTP) and 8091 (RPC)
+#  shell: "trillian_log_server -http_endpoint=localhost:8090 -rpc_endpoint=localhost:8091 --logtostderr &&"
+#
+#- name: Start Trillian log signer on ports 8190 (HTTP) and 8191 (RPC)
+#  shell: "trillian_log_signer --logtostderr --force_master --http_endpoint=localhost:8190 -rpc_endpoint=localhost:8191  --batch_size=1000 --sequencer_guard_window=0 --sequencer_interval=200ms &&"

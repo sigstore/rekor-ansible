@@ -1,0 +1,10 @@
+---
+- name: Install Git
+  dnf:
+    name: git
+    state: present
+
+- name: Install the Go programming language
+  dnf:
+    name: golang
+    state: present
